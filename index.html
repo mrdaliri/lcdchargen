@@ -23,7 +23,7 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             text-align: center;
         }
         
-        pre {
+        pre, #warning {
             margin-left: 25px;
             text-align: left;
         }
@@ -32,7 +32,7 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             width: 100%;
         }
         
-        #wrapper {
+        #input {
             width: 400px;
             margin-left: auto;
             margin-right: auto;
@@ -53,7 +53,7 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             clear: both;
         }
         
-        #arduino {
+        #program {
             padding-top: 30px;
             clear: both;
         }
@@ -70,6 +70,11 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
         
         .on {
             background: #484848;
+        }
+
+        #warning {
+            color: red;
+            display: none;
         }
     </style>
 
@@ -128,10 +133,12 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             // Create output
             var output = 'byte customChar[8] = {\n';
             for (i = 0; i < 8; i++) {
-                output += '\t0b';
+                var n = '';
                 for (j = 0; j < 5; j++) {
-                    output += customchar[i][j];
+                    n += customchar[i][j];
                 }
+                var base10 = parseInt(n, 2);
+                output += '\t0x' + base10.toString(16).toUpperCase();
                 if (i < 7) {
                     output += ',\n';
                 }
@@ -175,11 +182,36 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
                 generateOutput();
             });
 
+            $("#MCU").on("change", function() {
+                var mcu = $("#MCU").val();
+                $("#mcuLibrary").text('#include "stm32' + mcu + 'xx_hal.h"');
+                $('#warning').toggle(mcu !== 'f3');
+            });
+
             // Bind a change event listener to every numerical pin inputs
-            $(".pinChange").on("change", function() {
+            $(".pinChange,.portChange").on("change", function() {
+                if ($(this).hasClass('pinChange')) {
+                    var select = $(this);
+                    var value = select.val();
+                    var otherPins = $(".pinChange").not(select);
+                    var duplicateFound = false;
+                    otherPins.each(function(i, pin) {
+                        if ($(pin).val() === value) {
+                            duplicateFound = true;
+                        }
+                    });
+                    if (duplicateFound) {
+                        alert("Pin #" + value + " is in use. Please choose another pin.");
+                        select.val(select.data('current'));
+                        return false;
+                    }
+                    otherPins.find('option[value=' + select.data('current') + ']').prop('disabled', false);
+                    otherPins.find('option[value=' + value + ']').prop('disabled', true);
+                    select.data('current', value);
+                }
             
                 // Change the output code that deals with the lcd (pin) initialization
-                $(".initPins").text("LiquidCrystal lcd(" + $("#RSPin").val() + ", " + $("#EnablePin").val() + ", " + $("#D4Pin").val() + ", " + $("#D5Pin").val() + ", " + $("#D6Pin").val() + ", " + $("#D7Pin").val() + ");");
+                $(".initPins").text("LiquidCrystal(GPIO" + $("#Port").val() + ", GPIO_PIN_" + $("#RSPin").val() + ", GPIO_PIN_" + $("#RWPin").val() + ", GPIO_PIN_" + $("#EnablePin").val() + ", GPIO_PIN_" + $("#D4Pin").val() + ", GPIO_PIN_" + $("#D5Pin").val() + ", GPIO_PIN_" + $("#D6Pin").val() + ", GPIO_PIN_" + $("#D7Pin").val() + ");");
             });
         });
     </script>
@@ -187,10 +219,10 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
 </head>
 
 <body>
-    <h1>Custom Character Generator<br />for HD44780 LCD Modules</h1>
+    <h1>Custom Character Generator<br />for 16x2 LCD Modules</h1>
     <span>Click pixels to generate output.</span>
 
-    <div id="wrapper">
+    <div id="input">
         <div id="pixels">
             <h2>Pixels</h2>
             <canvas id="pixel-0-0" class="pixel off"></canvas>
@@ -250,115 +282,184 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             <h2>Output</h2>
             <pre class="output">
 byte customChar[8] = {
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0
 };
             </pre>
         </div>
         <div id="pins">
+            <p>
+                <label>
+                    <strong>STM32 MCU: </strong>
+                    <select id="MCU">
+                        <optgroup label="High performance">
+                            <option value="f2">F2</option>
+                            <option value="f4">F4</option>
+                            <option value="f7">F7</option>
+                            <option value="h7">H7</option>
+                        </optgroup>
+                        <optgroup label="Mainstream">
+                            <option value="f0">F0</option>
+                            <option value="f1">F1</option>
+                            <option value="f3" selected>F3</option>
+                        </optgroup>
+                        <optgroup label="Ultra-low-power">
+                            <option value="l0">L0</option>
+                            <option value="l1">L1</option>
+                            <option value="l4">L4</option>
+                        </optgroup>
+                        <optgroup label="Wireless">
+                            <option value="wb">WB</option>
+                        </optgroup>
+                    </select>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <strong>STM32 Port: </strong>
+                    <select id="Port" class="portChange">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D" selected>D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                    </select>
+                </label>
+            </p>
             <table>
                 <thead>
                     <tr>
                         <th>LCD Module</th>
-                        <th align="center">Arduino Pin</th>
+                        <th align="center">STM32 Pin</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>RS</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="12" id="RSPin" class="pinChange">
+                            <select id="RSPin" class="pinChange" data-current="8">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9" disabled>9</option><option value="10" disabled>10</option><option value="11" disabled>11</option><option value="12" disabled>12</option><option value="13" disabled>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                     <tr>
                         <td>RW</td>
-                        <td align="center">GND</td>
+                        <td align="center">
+                            <select id="RWPin" class="pinChange" data-current="9">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" selected>9</option><option value="10" disabled>10</option><option value="11" disabled>11</option><option value="12" disabled>12</option><option value="13" disabled>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
+                        </td>
                     </tr>
                     <tr>
                         <td>Enable</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="11" id="EnablePin" class="pinChange">
+                            <select id="EnablePin" class="pinChange" data-current="10">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" disabled>9</option><option value="10" selected>10</option><option value="11" disabled>11</option><option value="12" disabled>12</option><option value="13" disabled>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                     <tr>
                         <td>D4</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="5" id="D4Pin" class="pinChange">
+                            <select id="D4Pin" class="pinChange" data-current="11">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" disabled>9</option><option value="10" disabled>10</option><option value="11" selected>11</option><option value="12" disabled>12</option><option value="13" disabled>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                     <tr>
                         <td>D5</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="4" id="D5Pin" class="pinChange">
+                            <select id="D5Pin" class="pinChange" data-current="12">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" disabled>9</option><option value="10" disabled>10</option><option value="11" disabled>11</option><option value="12" selected>12</option><option value="13" disabled>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                     <tr>
                         <td>D6</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="3" id="D6Pin" class="pinChange">
+                            <select id="D6Pin" class="pinChange" data-current="13">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" disabled>9</option><option value="10" disabled>10</option><option value="11" disabled>11</option><option value="12" disabled>12</option><option value="13" selected>13</option><option value="14" disabled>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                     <tr>
                         <td>D7</td>
                         <td align="center">
-                            <input type="number" min="0" max="13" value="2" id="D7Pin" class="pinChange">
+                            <select id="D7Pin" class="pinChange" data-current="14">
+                                <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" disabled>8</option><option value="9" disabled>9</option><option value="10" disabled>10</option><option value="11" disabled>11</option><option value="12" disabled>12</option><option value="13" disabled>13</option><option value="14" selected>14</option><option value="15">15</option>
+                            </select>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <div id="arduino">
-            <h2>Example Arduino Sketch</h2>
-            <span><a href="http://www.arduino.cc/en/Reference/LiquidCrystal">(LiquidCrystal library reference)</a></span>
-            <pre>
-#include &lt;LiquidCrystal.h&gt;
+    </div>
+    <div id="program">
+        <h2>Example ARM STM32</h2>
+        <span><a href="https://github.com/SayidHosseini/STM32LiquidCrystal/">(LiquidCrystal library for ARM STM32 reference)</a></span>
+        <p id="warning"><strong>Warning: </strong>Do NOT forget to change <code>#include</code> statement in <code>LiquidCrystal.h</code>!</p>
+        <pre>
+<span id="mcuLibrary">#include "stm32f3xx_hal.h"</span> // change this here and inside LiquidCrystal library accordingly
+#include "LiquidCrystal.h"
 
-// initialize the library
-<span class="initPins">LiquidCrystal lcd(12, 11, 5, 4, 3, 2);</span>
+// byte is not defined here by default
+typedef unsigned char byte;
             </pre>
 
-            <pre class="output">
+        <pre class="output">
 byte customChar[8] = {
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000,
-	0b00000
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0
 };
             </pre>
 
-            <pre>
-void setup()
-{
-  // create a new custom character
-  lcd.createChar(0, customChar);
-  
-  // set up number of columns and rows
-  lcd.begin(16, 2);
+        <pre>
 
-  // print the custom char to the lcd
-  // why typecast? see: http://arduino.cc/forum/index.php?topic=74666.0
-  lcd.write((uint8_t)0);
+// ISR Required by the library (for HAL_Delay)
+void SysTick_Handler(void);
+
+int main(void) {
+  // Initializing SysTick - required by the library
+  HAL_Init();
+
+  // initialize the library by associating any needed LCD interface pin
+  <span class="initPins">LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);</span>
+
+  // create a new character
+  createChar(0, customChar);
+
+  // Print a message to the lcd.
+  setCursor(1, 0); // This line is vital. You should set the cursor after you createChar.
+  print("New Custom Character is ");
+  write((0));
+
+  while (1) {
+  }
 }
 
-void loop()
-{
-  
+void SysTick_Handler(void) {
+  HAL_IncTick();
 }
             </pre>
 
-        </div>
     </div>
 </body>
 
 
 </html>
+
+
+
