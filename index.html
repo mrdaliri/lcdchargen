@@ -138,7 +138,8 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
                     n += customchar[i][j];
                 }
                 var base10 = parseInt(n, 2);
-                output += '\t0x' + base10.toString(16).toUpperCase();
+                var strHex = base10.toString(16).toUpperCase();
+                output += '\t0x' + (strHex.length === 1 ? '0' + strHex : strHex);
                 if (i < 7) {
                     output += ',\n';
                 }
@@ -282,14 +283,14 @@ this stuff is worth it, you can buy me a beer in return. Omer Kilic
             <h2>Output</h2>
             <pre class="output">
 byte customChar[8] = {
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00
 };
             </pre>
         </div>
@@ -415,14 +416,14 @@ typedef unsigned char byte;
 
         <pre class="output">
 byte customChar[8] = {
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0,
-	0x0
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00,
+	0x00
 };
             </pre>
 
