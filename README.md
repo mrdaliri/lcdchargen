@@ -1,25 +1,25 @@
 lcdchargen
 ==========
-Custom Character Generator for HD44780 LCD Modules
+Custom Character Generator for 16x2 LCD Modules
 
 Usage
 -----
-The generator is available [here](http://omerk.github.com/lcdchargen/).
+The generator is available [here](http://mrdaliri.github.io/lcdchargen/).
 
 Click on the blocks to create a custom character which will automatically generate output.
 
-The example Arduino code generated defaults with the following connections:
+The example ARM STM32 code generated defaults with the following connections:
 
 
-| LCD Module    | Arduino Pin   |
-| ------------- |:-------------:|
-| RS            | 12            |
-| RW            | GND           |
-| Enable        | 11            |
-| D4            | 5             |
-| D5            | 4             |
-| D6            | 3             |
-| D7            | 2             |
+| LCD Module | STM32 Port | STM32 Pin |
+|------------|------------|-----------|
+| RS         | D          | 8         |
+| RW         | D          | 9         |
+| Enable     | D          | 10        |
+| D4         | D          | 11        |
+| D5         | D          | 12        |
+| D6         | D          | 13        |
+| D7         | D          | 14        |
 
 License
 -------
