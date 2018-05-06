@@ -443,8 +443,7 @@ int main(void) {
   createChar(0, customChar);
 
   // Print a message to the lcd.
-  setCursor(1, 0); // This line is vital. You should set the cursor after you createChar.
-  print("New Custom Character is ");
+  setCursor(0, 0); // This line is vital. You should set the cursor after you createChar.
   write((0));
 
   while (1) {
